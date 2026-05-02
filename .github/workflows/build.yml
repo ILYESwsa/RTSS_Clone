@@ -1,0 +1,97 @@
+# ================================================================
+# .github/workflows/build.yml
+# Builds all RTSS Clone targets on windows-latest using MSVC.
+# Uploads Injector.exe and HookDLL.dll as downloadable artifacts.
+# ================================================================
+
+name: Build RTSS Clone
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    name: Build (MSVC / x64)
+    runs-on: windows-latest
+
+    steps:
+      # ── Checkout ──────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Set up MSVC via Visual Studio environment ─────────────
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # ── CMake is pre-installed on windows-latest, just verify ─
+      - name: Verify CMake version
+        run: cmake --version
+
+      # ── Configure ─────────────────────────────────────────────
+      - name: Configure CMake (Release, x64)
+        run: |
+          cmake -S . -B build ^
+            -G "NMake Makefiles" ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_INSTALL_PREFIX=install
+
+      # ── Build ─────────────────────────────────────────────────
+      - name: Build all targets
+        run: cmake --build build --config Release --parallel
+
+      # ── Install to staging directory ─────────────────────────
+      - name: Install to staging directory
+        run: cmake --install build
+
+      # ── Collect artifacts ─────────────────────────────────────
+      - name: Collect build outputs
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+
+          # Search common CMake output locations
+          $searchPaths = @("build", "install\bin", "install")
+          $targets = @("Injector.exe", "HookDLL.dll", "SystemStats.exe", "OverlayViewer.exe")
+
+          foreach ($target in $targets) {
+              foreach ($dir in $searchPaths) {
+                  $found = Get-ChildItem -Path $dir -Filter $target -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+                  if ($found) {
+                      Write-Host "Found $target at $($found.FullName)"
+                      Copy-Item $found.FullName -Destination artifacts\
+                      break
+                  }
+              }
+          }
+
+          Write-Host "`nArtifacts collected:"
+          Get-ChildItem artifacts
+
+      # ── Upload artifacts ──────────────────────────────────────
+      - name: Upload RTSS Clone binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: RTSS-Clone-Binaries-x64
+          path: artifacts/
+          retention-days: 30
+          if-no-files-found: error
+
+      # ── Print download instructions ───────────────────────────
+      - name: Print instructions
+        run: |
+          echo ""
+          echo "=========================================================="
+          echo "  BUILD COMPLETE"
+          echo "  To download the binaries:"
+          echo "  1. Go to: Actions tab in this GitHub repository"
+          echo "  2. Click this workflow run"
+          echo "  3. Scroll to 'Artifacts' section at the bottom"
+          echo "  4. Click 'RTSS-Clone-Binaries-x64' to download ZIP"
+          echo "=========================================================="
