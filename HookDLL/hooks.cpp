@@ -23,14 +23,14 @@
 #include "../Shared/vulkan_minimal.h"
 
 // Dear ImGui
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_dx9.h"
-#include "imgui/imgui_impl_dx11.h"
-#include "imgui/imgui_impl_dx12.h"
-#include "imgui/imgui_impl_win32.h"
+#include "imgui.h"
+#include "imgui_impl_dx9.h"
+#include "imgui_impl_dx11.h"
+#include "imgui_impl_dx12.h"
+#include "imgui_impl_win32.h"
 
 // MinHook
-#include "MinHook/MinHook.h"
+#include "MinHook.h"
 
 // Shared / utility
 #include "../Shared/SharedMemory.h"
