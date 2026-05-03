@@ -11,6 +11,7 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+#include <d3d9.h>
 #include <dxgi.h>
 #include <d3d11.h>
 
@@ -54,7 +55,10 @@ static PFN_DX9EndScene g_origDX9 = nullptr;
 
 // Vulkan fallback
 typedef VkResult(VKAPI_ATTR VKAPI_CALL* PFN_VkQueuePresent)(VkQueue, const VkPresentInfoKHR*);
-static PFN_VkQueuePresent g_origVkPresent = nullptr;
+static PFN_VkQueuePresent g_origVkPresent   = nullptr;
+
+// Forward declaration
+static VkResult VKAPI_ATTR VKAPI_CALL HookedVkPresent(VkQueue, const VkPresentInfoKHR*);
 
 // ----------------------------------------------------------------
 // Shared helpers
