@@ -1,0 +1,55 @@
+name: Build RTSS Clone
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    name: Build (MSVC x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Verify CMake
+        run: cmake --version
+
+      - name: Configure
+        run: cmake -S . -B build -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Install
+        run: cmake --install build
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $targets = @("Injector.exe","HookDLL.dll","SystemStats.exe","OverlayViewer.exe")
+          foreach ($t in $targets) {
+            $f = Get-ChildItem -Path build,install -Filter $t -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($f) { Copy-Item $f.FullName artifacts\; Write-Host "Collected $t" }
+            else { Write-Host "WARNING: $t not found" }
+          }
+          Get-ChildItem artifacts
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: RTSS-Clone-Binaries-x64
+          path: artifacts/
+          retention-days: 30
+          if-no-files-found: error
