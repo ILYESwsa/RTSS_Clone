@@ -8,6 +8,7 @@
 #endif
 #include <windows.h>
 #include <commctrl.h>
+#include <commdlg.h>
 #include <objidl.h>
 #include <gdiplus.h>
 #include <cstdio>
