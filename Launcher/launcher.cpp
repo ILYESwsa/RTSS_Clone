@@ -17,6 +17,7 @@
 #include <objidl.h>
 #include <gdiplus.h>
 #include <commctrl.h>
+#include <commdlg.h>
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
